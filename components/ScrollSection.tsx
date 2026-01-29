@@ -69,6 +69,7 @@ export function ScrollContainer({ children }: ScrollContainerProps) {
     return (
         <div
             ref={containerRef}
+            data-scroll-container
             className="
         h-screen 
         overflow-y-auto 
