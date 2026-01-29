@@ -479,3 +479,9 @@ export default function HomePage() {
               </a>{" "}
               community
             </p>
+          </div>
+        </section>
+      </ScrollContainer>
+    </>
+  );
+}
