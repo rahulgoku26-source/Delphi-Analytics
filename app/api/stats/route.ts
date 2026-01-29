@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { VALID_MARKET_IDS_BIGINT } from "@/lib/markets-config";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    // All from DATABASE - no external API calls!
+    // Only count VALID markets (0, 1, 3) - not any stray test markets
     const [activeCount, settledCount, allTrades, indexerState, recentTrades] = await Promise.all([
-      prisma.market.count({ where: { status: 0 } }),
-      prisma.market.count({ where: { status: 2 } }),
+      prisma.market.count({
+        where: {
+          status: 0,
+          marketId: { in: VALID_MARKET_IDS_BIGINT }
+        }
+      }),
+      prisma.market.count({
+        where: {
+          status: 2,
+          marketId: { in: VALID_MARKET_IDS_BIGINT }
+        }
+      }),
       prisma.trade.findMany({
         select: {
           tokensDelta: true,
