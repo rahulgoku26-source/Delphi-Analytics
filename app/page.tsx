@@ -63,25 +63,45 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Track active section on scroll
+  // Track active section on scroll - observe within scroll container
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+    // Wait for DOM to be ready
+    const timer = setTimeout(() => {
+      const scrollContainer = document.querySelector('[data-scroll-container]');
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          // Find the entry with highest intersection ratio
+          let maxRatio = 0;
+          let activeId = "hero";
+
+          entries.forEach((entry) => {
+            if (entry.intersectionRatio > maxRatio) {
+              maxRatio = entry.intersectionRatio;
+              activeId = entry.target.id;
+            }
+          });
+
+          if (maxRatio > 0) {
+            setActiveSection(activeId);
           }
-        });
-      },
-      { threshold: 0.5 }
-    );
+        },
+        {
+          root: scrollContainer,
+          threshold: [0.1, 0.3, 0.5, 0.7, 0.9],
+          rootMargin: "-10% 0px -10% 0px"
+        }
+      );
 
-    sections.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
+      sections.forEach(({ id }) => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
 
-    return () => observer.disconnect();
+      return () => observer.disconnect();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const getDisplayMarketId = (internalId: string): string => {
@@ -353,19 +373,19 @@ export default function HomePage() {
                 viewport={{ once: true }}
               >
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[400px] sm:min-w-0">
                     <thead>
                       <tr className="text-left text-xs text-zinc-500 border-b border-[var(--border-color)]">
-                        <th className="px-4 py-3 font-medium">Type</th>
-                        <th className="px-4 py-3 font-medium">Trader</th>
-                        <th className="px-4 py-3 font-medium">Market</th>
-                        <th className="px-4 py-3 font-medium text-right">Amount</th>
-                        <th className="px-4 py-3 font-medium text-right">Price</th>
-                        <th className="px-4 py-3 font-medium text-right">Time</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium">Type</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium">Trader</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium">Market</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium text-right">Amount</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium text-right hidden sm:table-cell">Price</th>
+                        <th className="px-3 sm:px-4 py-3 font-medium text-right hidden md:table-cell">Time</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {data.recentTrades.slice(0, 8).map((trade, idx) => {
+                      {data.recentTrades.slice(0, 8).map((trade: HomeData['recentTrades'][0], idx: number) => {
                         const internalId = trade.marketId.toString();
                         const displayId = getDisplayMarketId(internalId);
                         return (
@@ -376,43 +396,43 @@ export default function HomePage() {
                             transition={{ delay: idx * 0.05 }}
                             className="table-row border-b border-[var(--border-color)] last:border-0"
                           >
-                            <td className="px-4 py-3">
+                            <td className="px-3 sm:px-4 py-3">
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${trade.isBuy
-                                    ? "bg-emerald-500/10 text-emerald-400"
-                                    : "bg-red-500/10 text-red-400"
+                                  ? "bg-emerald-500/10 text-emerald-400"
+                                  : "bg-red-500/10 text-red-400"
                                   }`}
                               >
                                 {trade.isBuy ? "BUY" : "SELL"}
                               </span>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-3 sm:px-4 py-3">
                               <Link
                                 href={`/address/${trade.trader}`}
-                                className="font-mono text-sm text-zinc-300 hover:text-blue-400 transition-colors"
+                                className="font-mono text-xs sm:text-sm text-zinc-300 hover:text-blue-400 transition-colors"
                               >
                                 {formatAddress(trade.trader, 4)}
                               </Link>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-3 sm:px-4 py-3">
                               <Link
                                 href={`/markets/${internalId}`}
-                                className="text-sm text-zinc-300 hover:text-blue-400"
+                                className="text-xs sm:text-sm text-zinc-300 hover:text-blue-400 whitespace-nowrap"
                               >
                                 Market #{displayId}
                               </Link>
                             </td>
-                            <td className="px-4 py-3 text-right">
-                              <span className="font-mono text-sm text-white">
+                            <td className="px-3 sm:px-4 py-3 text-right">
+                              <span className="font-mono text-xs sm:text-sm text-white">
                                 {formatTokens(trade.tokensDelta)}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-3 sm:px-4 py-3 text-right hidden sm:table-cell">
                               <span className="font-mono text-sm text-zinc-400">
                                 {trade.impliedProbability?.toFixed(1) || "0"}%
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-3 sm:px-4 py-3 text-right hidden md:table-cell">
                               <span className="text-xs text-zinc-500">
                                 {formatTimeAgo(trade.blockTime)}
                               </span>
@@ -447,7 +467,7 @@ export default function HomePage() {
         <section className="px-4 py-12 border-t border-zinc-800/50">
           <div className="mx-auto max-w-6xl text-center">
             <p className="text-zinc-600 text-sm">
-              Built with ❤️ for the{"Gensyn Community"}
+              Built with ❤️ for the{" "}
               <a href="https://gensyn.ai" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">
                 Gensyn
               </a>{" "}
