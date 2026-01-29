@@ -473,7 +473,7 @@ export default function HomePage() {
         <section className="px-4 py-12 border-t border-zinc-800/50">
           <div className="mx-auto max-w-6xl text-center">
             <p className="text-zinc-600 text-sm">
-              Built with ❤️ for the{" "}
+              Built with &hearts; for the{" "}
               <a href="https://gensyn.ai" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">
                 Gensyn
               </a>{" "}
