@@ -63,45 +63,51 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Track active section on scroll - observe within scroll container
+  // Track active section on scroll using scroll position
   useEffect(() => {
-    // Wait for DOM to be ready
-    const timer = setTimeout(() => {
-      const scrollContainer = document.querySelector('[data-scroll-container]');
+    const handleScroll = () => {
+      const scrollContainer = document.querySelector('[data-scroll-container]') as HTMLElement;
+      if (!scrollContainer) return;
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          // Find the entry with highest intersection ratio
-          let maxRatio = 0;
-          let activeId = "hero";
+      const scrollTop = scrollContainer.scrollTop;
+      const containerHeight = scrollContainer.clientHeight;
 
-          entries.forEach((entry) => {
-            if (entry.intersectionRatio > maxRatio) {
-              maxRatio = entry.intersectionRatio;
-              activeId = entry.target.id;
-            }
-          });
-
-          if (maxRatio > 0) {
-            setActiveSection(activeId);
-          }
-        },
-        {
-          root: scrollContainer,
-          threshold: [0.1, 0.3, 0.5, 0.7, 0.9],
-          rootMargin: "-10% 0px -10% 0px"
-        }
-      );
+      // Find which section is currently most visible
+      let currentSection = "hero";
 
       sections.forEach(({ id }) => {
         const el = document.getElementById(id);
-        if (el) observer.observe(el);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const relativeTop = rect.top - containerRect.top;
+
+          // If section is in the top half of the viewport, it's the active one
+          if (relativeTop <= containerHeight / 2 && relativeTop > -rect.height / 2) {
+            currentSection = id;
+          }
+        }
       });
 
-      return () => observer.disconnect();
-    }, 100);
+      setActiveSection(currentSection);
+    };
 
-    return () => clearTimeout(timer);
+    // Wait for DOM to be ready
+    const timer = setTimeout(() => {
+      const scrollContainer = document.querySelector('[data-scroll-container]');
+      if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Initial check
+      }
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      const scrollContainer = document.querySelector('[data-scroll-container]');
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, []);
 
   const getDisplayMarketId = (internalId: string): string => {
@@ -473,9 +479,3 @@ export default function HomePage() {
               </a>{" "}
               community
             </p>
-          </div>
-        </section>
-      </ScrollContainer>
-    </>
-  );
-}
